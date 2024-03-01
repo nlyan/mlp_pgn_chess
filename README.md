@@ -22,4 +22,4 @@
 #### Unimplemented features:
 * There's no support for ["En Passant" moves](https://www.chess.com/terms/en-passant). The capture piece won't be removed from the board i.e. only captures where you land on the captured square work
 * Pawn promotion is parsed from PGN but not implemented (just a few lines of code to add, just run out of time)
-* Knight movement is not fully validated during piece selection (I don't check all the necessary squares are empty). I'm just assuming situations where two Knights could ambigiously  to the same destination square are incredibly unlikely.
+* Knight movement is not fully validated during piece selection (I don't check all the necessary squares are empty). I'm just assuming situations where two Knights could ambigiously move to the same destination square are rare in your tests...
