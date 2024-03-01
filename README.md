@@ -10,7 +10,7 @@
 
 * The PGN file is simply slurped in line by line
 * Comments are stripped from the movetext taking in consideration nested parens
-* I implemented a simple back-tracking descent parser to parse the PGN movetext. #
+* I implemented a simple back-tracking descent parser to parse the PGN movetext.
 
 #### Compiling
 * Tested on GCC 12.3 (not 12.1), sorry.
