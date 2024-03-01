@@ -3,6 +3,8 @@
 # MLP PGN CHESS
 ### For John
 
+#### Time spent
+* Approximately 8 hours
 
 #### Parsing
 
@@ -13,6 +15,9 @@
 #### Compiling
 * Tested on GCC 12.3 (not 12.1), sorry.
 * build with "cmake -DMLP_CHESS_DEBUG=1" to get more verbose output out of builds.
+
+#### Tests
+* I didn't really have time to do anything except manual tests and comparing output to Chess.com
 
 #### Unimplemented features:
 * There's no support for Pawn "En Passant" moves. The capture piece won't be removed from the board i.e. only captures where you land on the captured square work
