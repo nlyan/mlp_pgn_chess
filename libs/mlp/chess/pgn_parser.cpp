@@ -373,6 +373,8 @@ parser::parse_file(std::filesystem::path const& file_path,
         moves.push_back(white_move);
         moves.push_back(black_move);
     }
+    skip_ws(mt_itr, mt_end);
+    parse_game_result(mt_itr, mt_end);
     if (std::distance(mt_itr, mt_end) > 0)
     {
         throw std::runtime_error("Failed to parse movetext: " + std::string(mt_itr));

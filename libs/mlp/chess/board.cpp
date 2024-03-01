@@ -31,7 +31,7 @@ board::identify_moving_piece(piece_colour colour, piece_type type,
     bool found = false;
     char found_rank = 0;
     char found_file = 0;
-    // Iterate over the board dest find a piece of the specified colour and type
+    // Iterate over the board to find a piece of the specified colour and type
     for (char rank = '1'; rank <= '8'; ++rank)
     {
         if ((src.rank != 0) && (rank != src.rank))

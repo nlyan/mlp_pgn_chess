@@ -53,7 +53,7 @@ try
                                                        move.src, move.dest, move.is_capture))
                 {
                     std::ostringstream oss;
-                    oss << "Failed dest find piece dest make move " << (move_id / 2) << ": " << move;
+                    oss << "Failed to find piece to make move " << (move_id / 2) << ": " << move;
                     throw std::runtime_error(oss.str());
                 }
 #ifdef MLP_CHESS_DEBUG
