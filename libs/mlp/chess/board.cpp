@@ -54,14 +54,14 @@ board::identify_moving_piece(piece_colour colour, piece_type type,
             {
                 if (found)
                 {
-                    std::cout << "ERROR: Found two possible chess pieces that can make move: "
+                    std::cout << "Error: Found two possible chess pieces that can make move: "
                               << static_cast<char>(colour) << static_cast<char>(type) << " at ";
                     std::cout.put(found_file);
                     std::cout.put(found_rank);
                     std::cout << " and ";
                     std::cout.put(file);
                     std::cout.put(rank);
-                    std::cout << " can both move to " << dest << "." << std::endl;
+                    std::cout << " can both move to " << dest << ". My implementation is probably b0rked" << std::endl;
                 }
                 found_rank = rank;
                 found_file = file;
@@ -88,7 +88,6 @@ bool
 board::straight_path_is_clear_between(chess::square const& src,
                                       chess::square const& dest) const
 {
-    std::cout << "Checking whether straight path between " << src << " and " << dest << " is clear\n";
     if (src == dest) [[unlikely]]
     {
         return true;
@@ -111,7 +110,6 @@ board::straight_path_is_clear_between(chess::square const& src,
         {
             break;
         }
-        std::cout << "Checking whether " << step << " is empty -> " << std::boolalpha << empty_at(step) << std::endl;
         if (!empty_at(step))
         {
             return false;
@@ -124,7 +122,6 @@ bool
 board::diagonal_path_is_clear_between(chess::square const& src,
                                       chess::square const& dest) const
 {
-    std::cout << "Checking whether diagonal path between " << src << " and " << dest << " is clear\n";
     if (src == dest) [[unlikely]]
     {
         return true;
@@ -147,7 +144,6 @@ board::diagonal_path_is_clear_between(chess::square const& src,
         {
             break;
         }
-        std::cout << "Checking whether " << step << " is empty -> " << std::boolalpha << empty_at(step) << std::endl;
         if (!empty_at(step))
         {
             return false;
@@ -335,7 +331,9 @@ operator<< (std::ostream& os, board const& board)
     for (auto rank = rbegin(ranks); rank != rend(ranks); ++rank)
     {
         bool first = true;
+#ifdef MLP_CHESS_DEBUG
         os << rank_num-- << " ";
+#endif
         for (auto& square: *rank)
         {
             os << (first ? "" : "|") << static_cast<char>(square.colour()) << static_cast<char>(square.type());
@@ -343,11 +341,13 @@ operator<< (std::ostream& os, board const& board)
         }
         os << "\n";
     }
+#ifdef MLP_CHESS_DEBUG
     for (auto file = 'a'; file <= 'h'; ++file)
     {
         os << "  " << file;
     }
     os << "\n";
+#endif
     return os;
 }
 

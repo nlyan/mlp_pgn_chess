@@ -355,7 +355,9 @@ parser::parse_file(std::filesystem::path const& file_path,
     }
 
     remove_annotations(move_text_);
-    std::cout << move_text_ << std::endl;
+#ifdef MLP_CHESS_DEBUG
+    std::cout << "Movetext: " << move_text_ << std::endl;
+#endif
 
     char const* mt_itr = move_text_.data();
     char const* const mt_end = mt_itr + move_text_.size();
@@ -365,7 +367,9 @@ parser::parse_file(std::filesystem::path const& file_path,
 
     while (parse_move(mt_itr, mt_end, move_id, white_move, black_move))
     {
-        std::cout << "Move " << move_id << ": " << white_move << ", " << black_move << "\n";
+#ifdef MLP_CHESS_DEBUG
+        std::cout << "Parsed Move: " << move_id << ": " << white_move << ", " << black_move << "\n";
+#endif
         moves.push_back(white_move);
         moves.push_back(black_move);
     }
