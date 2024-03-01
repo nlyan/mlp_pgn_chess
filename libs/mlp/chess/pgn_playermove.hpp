@@ -12,30 +12,26 @@ namespace mlp::chess::pgn
 class kingside_castling
 {
 public:
-    piece_colour colour = piece_colour::Null;
+    piece_colour colour = piece_colour::None;
 };
 
 class queenside_castling
 {
 public:
-    piece_colour colour = piece_colour::Null;
+    piece_colour colour = piece_colour::None;
 };
 
 class standard_move
 {
 public:
-    piece_colour colour     = piece_colour::Null;
+    piece_colour colour     = piece_colour::None;
     piece_type piece        = piece_type::Pawn;
-    piece_type promoted_to  = piece_type::Null;
-    square                  from;
-    square                  to;
-    /*char from_file          = 0; // 'a'..'h'
-    char from_rank          = 0; // 1..8
-    char to_file            = 0; // 'a'..'h'
-    char to_rank            = 0; // 1..8*/
-    bool capture            = false;
-    bool check              = false;
-    bool mate               = false;
+    piece_type promotion    = piece_type::None;
+    square                  src;
+    square                  dest;
+    bool is_capture         = false;
+    bool is_check           = false;
+    bool is_mate            = false;
 };
 
 using player_move = std::variant<std::monostate, standard_move, kingside_castling, queenside_castling>;

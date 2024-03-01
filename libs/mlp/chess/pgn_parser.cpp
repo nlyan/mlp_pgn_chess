@@ -188,7 +188,7 @@ parse_pawn_promotion(char const*& begin, char const* const end, pgn::standard_mo
     {
         return false; // Backtrack
     }
-    move.promoted_to = piece;
+    move.promotion = piece;
     begin = ptr; // Commit
     return true;
 }
@@ -203,11 +203,11 @@ parse_check_or_mate(char const*& begin, char const* const end, pgn::standard_mov
     switch (*begin)
     {
         case '+':
-            move.check = true;
+            move.is_check = true;
             ++begin;
             return true;
         case '#':
-            move.mate = true;
+            move.is_mate = true;
             ++begin;
             return true;
     }
@@ -234,43 +234,43 @@ parse_standard_move(char const*& begin, char const* const end, pgn::standard_mov
      * and then one of the promoted pieces returning to the back rank, a very rare occurrence), then the piece is
      * identified by _both_ file and rank of departure.
      */
-    move.from.file = 0; // So we can detect failure
-    move.from.rank = 0;
-    parse_file(ptr, end, move.from.file); // Optional, so ignore failure
-    parse_rank(ptr, end, move.from.rank); // Optional, so ignore failure
-    move.capture = false;
-    parse_capture(ptr, end, move.capture); // Optional, so ignore failure
-    move.to.file = 0; // So we can detect failure
-    move.to.rank = 0;
-    if (!parse_square(ptr, end, move.to.file, move.to.rank))
+    move.src.file = 0; // So we can detect failure
+    move.src.rank = 0;
+    parse_file(ptr, end, move.src.file); // Optional, so ignore failure
+    parse_rank(ptr, end, move.src.rank); // Optional, so ignore failure
+    move.is_capture = false;
+    parse_capture(ptr, end, move.is_capture); // Optional, so ignore failure
+    move.dest.file = 0; // So we can detect failure
+    move.dest.rank = 0;
+    if (!parse_square(ptr, end, move.dest.file, move.dest.rank))
     {
-        // If we just saw a capture 'x' then a destination square should have followed
-        if (move.capture)
+        // If we just saw a capture ('x') then a destination square should have followed
+        if (move.is_capture)
         {
             move = pgn::standard_move{};
             return false;
         }
         // If we eagerly parsed the destination square as the departing square, then
         // both file and rank must be present.
-        if (!move.from.file || !move.from.rank)
+        if (!move.src.file || !move.src.rank)
         {
             move = pgn::standard_move{};
             return false;
         }
-        std::swap(move.to.file, move.from.file);
-        std::swap(move.to.rank, move.from.rank);
+        std::swap(move.dest.file, move.src.file);
+        std::swap(move.dest.rank, move.src.rank);
     }
-    move.promoted_to = chess::piece_type::Null;
+    move.promotion = chess::piece_type::None;
     parse_pawn_promotion(ptr, end, move);
-    move.check = false;
-    move.mate = false;
+    move.is_check = false;
+    move.is_mate = false;
     parse_check_or_mate(ptr, end, move);
     begin = ptr; // Commit
     return true;
 }
 
 bool
-parse_player_move(char const*& begin, char const* const end, pgn::player_move& move)
+parse_single_move(char const*& begin, char const* const end, pgn::player_move& move)
 {
     auto ptr = begin;
     if (parse_queenside_castling(ptr, end, move.emplace<pgn::queenside_castling>()))
@@ -363,7 +363,7 @@ parser::parse_file(std::filesystem::path const& file_path,
     pgn::player_move white_move, black_move;
     moves.clear();
 
-    while (parse_pgn_move(mt_itr, mt_end, move_id, white_move, black_move))
+    while (parse_move(mt_itr, mt_end, move_id, white_move, black_move))
     {
         std::cout << "Move " << move_id << ": " << white_move << ", " << black_move << "\n";
         moves.push_back(white_move);
@@ -377,9 +377,9 @@ parser::parse_file(std::filesystem::path const& file_path,
 }
 
 bool
-parser::parse_pgn_move(char const*& begin, const char *end,
-                       unsigned& move_id,
-                       pgn::player_move& white_move, pgn::player_move& black_move)
+parser::parse_move(char const*& begin, const char *end,
+                   unsigned& move_id,
+                   pgn::player_move& white_move, pgn::player_move& black_move)
 {
     auto ptr = begin;
     skip_ws(ptr, end);
@@ -392,14 +392,14 @@ parser::parse_pgn_move(char const*& begin, const char *end,
         return false;
     }
     skip_ws(ptr, end);
-    if (!parse_player_move(ptr, end, white_move))
+    if (!parse_single_move(ptr, end, white_move))
     {
         return false;
     }
     std::visit (overloaded([](auto& move) { move.colour = piece_colour::White; },
                                   [](std::monostate&){}), white_move);
     skip_ws(ptr, end);
-    if (!parse_player_move(ptr, end, black_move))
+    if (!parse_single_move(ptr, end, black_move))
     {
         if (parse_game_result(ptr, end))
         {

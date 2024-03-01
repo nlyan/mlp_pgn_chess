@@ -1,5 +1,6 @@
 #include <mlp/chess/board.hpp>
 #include <mlp/chess/pgn_parser.hpp>
+#include <mlp/chess/utility.hpp>
 
 #include <filesystem>
 #include <iostream>
@@ -33,26 +34,36 @@ try
     std::vector<chess::pgn::player_move> moves;
     pgn_parser.parse_file(argv[1], moves);
 
-    std::cout << "Begin!:\n"
-              << chess_board << "\n";
+    std::cout << "\nMove 0:\n" << chess_board << "\n";
 
-    int move_id = 2; // A "move" in chess is two player moves
+    int move_id = 2;
     for (auto& move_var: moves)
     {
-        if (!std::holds_alternative<chess::pgn::standard_move>(move_var))
-        {
-            continue;
-        }
-        auto& move = std::get<chess::pgn::standard_move>(move_var);
-        if (!chess_board.identify_moving_piece(move.colour, move.piece,
-                                               move.from,move.to, move.capture))
-        {
-            std::cout << "Failed to identify piece for move " << (move_id/2) << ": " << move << "\n";
-            return EXIT_FAILURE;
-        }
+        std::cout << "\nMove " << (move_id/2) << ": " <<  move_var << "\n";
 
-        std::cout << "\nMove " << (move_id/2) << ": " << move << "\n";
-        chess_board.move(move.from, move.to, move.capture);
+        std::visit(chess::overloaded
+        (
+            [&](chess::pgn::standard_move& move)
+            {
+                if (!chess_board.identify_moving_piece(move.colour, move.piece,
+                                                       move.src, move.dest, move.is_capture)) {
+                    std::cout << "Failed dest find piece dest make move " << (move_id / 2) << ": " << move << "\n";
+                    return;
+                }
+                std::cout << "Resolved: " << move <<  "\n";
+                chess_board.move(move.src, move.dest, move.is_capture);
+            },
+            [&](chess::pgn::kingside_castling& move)
+            {
+                chess_board.perform_kingside_castling(move.colour);
+            },
+            [&](chess::pgn::queenside_castling& move)
+            {
+                chess_board.perform_queenside_castling(move.colour);
+            },
+            [](auto& other) {} // no op
+        ), move_var);
+
         std::cout << chess_board;
         ++move_id;
     }

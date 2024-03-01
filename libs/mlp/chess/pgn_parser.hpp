@@ -17,10 +17,10 @@ public:
     void parse_file(std::filesystem::path const& file_path,
                     std::vector<pgn::player_move>& moves);
 
-    static bool parse_pgn_move(char const*& begin, char const* end,
-                               unsigned& move_id,
-                               pgn::player_move& white_move,
-                               pgn::player_move& black_move);
+    static bool parse_move(char const*& begin, char const* end,
+                           unsigned& move_id,
+                           pgn::player_move& white_move,
+                           pgn::player_move& black_move);
     void reset();
 
 private:

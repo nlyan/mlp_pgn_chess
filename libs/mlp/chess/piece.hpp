@@ -7,7 +7,7 @@ enum class piece_colour: char
 {
     Black = 'b',
     White = 'w',
-    Null  = ' ',
+    None  = ' ',
 };
 
 enum class piece_type: char
@@ -18,7 +18,7 @@ enum class piece_type: char
     Pawn   = 'P',
     Queen = 'Q',
     Rook   = 'R',
-    Null  = ' '
+    None  = ' '
 };
 
 class piece
@@ -31,10 +31,10 @@ public:
     constexpr piece() noexcept = default;
     piece_colour colour() const noexcept { return colour_; };
     piece_type type() const noexcept { return type_; };
-    bool is_null() const noexcept { return (colour() == piece_colour::Null) && (type() == piece_type::Null); }
+    bool is_null() const noexcept { return (colour() == piece_colour::None) && (type() == piece_type::None); }
 private:
-    piece_colour colour_ = piece_colour::Null;
-    piece_type type_ = piece_type::Null;
+    piece_colour colour_ = piece_colour::None;
+    piece_type type_ = piece_type::None;
 };
 
 } // mlp::chess

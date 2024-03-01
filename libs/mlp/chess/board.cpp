@@ -49,7 +49,7 @@ board::identify_moving_piece(piece_colour colour, piece_type type,
             {
                 continue;
             }
-            // Check if the piece can move dest the destination
+            // Check if the piece can move to the destination
             if (is_valid_move(type, square{file, rank}, dest, is_capture))
             {
                 if (found)
@@ -173,13 +173,14 @@ board::is_valid_move(piece_type const type, square const& from, square const& to
         }
         case piece_type::King:
         {
-            // There's only ever one King so there's never any ambiguity, we can safely just assume the move
+            // There's only ever one King so there's never any ambiguity, we can safely assume the move
             // is always valid.
             return true;
         }
         case piece_type::Knight:
         {
             // A valid Knight move is either two squares in one direction and one square in the other
+            // TODO: Not checking if the square jumped is empty right now. Chance of ambiguity seems low
             if (((rank_diff == 2) && (file_diff == 1)) || ((rank_diff == 1) && (file_diff == 2)))
             {
                 return true;
@@ -200,7 +201,7 @@ board::is_valid_move(piece_type const type, square const& from, square const& to
             // Rooks move either vertically or horizontally
             return (is_straight_move && straight_path_is_clear_between(from, to));
         }
-        case piece_type::Null:
+        case piece_type::None:
         default:
         {
             break;
@@ -244,17 +245,83 @@ board::is_valid_pawn_move(square const& from, square const& to, bool const is_ca
     return false;
 }
 
-void
-board::move(chess::square const& from, chess::square const& to, bool const is_capture)
+void board::perform_queenside_castling(piece_colour const side)
 {
-    auto& from_piece = ranks_[from.rank - '1'][from.file - 'a'];
-    auto& to_piece = ranks_[to.rank - '1'][to.file - 'a'];
+    switch (side)
+    {
+        case piece_colour::Black:
+        {
+            auto& e8 = ranks_[7]['e' - 'a']; // King
+            auto& a8 = ranks_[7]['a' - 'a']; // Rook
+            auto& c8 = ranks_[7]['c' - 'a'];
+            auto& d8 = ranks_[7]['d' - 'a'];
+            c8 = e8;
+            e8 = piece{};
+            d8 = a8;
+            a8 = piece{};
+            break;
+        }
+        case piece_colour::White:
+        {
+            auto& e1 = ranks_[0]['e' - 'a']; // King
+            auto& a1 = ranks_[0]['a' - 'a']; // Rook
+            auto& c1 = ranks_[0]['c' - 'a'];
+            auto& d1 = ranks_[0]['d' - 'a'];
+            c1 = e1;
+            e1 = piece{};
+            d1 = a1;
+            a1 = piece{};
+            break;
+        }
+        case piece_colour::None:
+             return;
+    }
+}
+
+void board::perform_kingside_castling(piece_colour const side)
+{
+    switch (side)
+    {
+        case piece_colour::Black:
+        {
+            auto& e8 = ranks_[7]['e' - 'a']; // King
+            auto& h8 = ranks_[7]['h' - 'a']; // Rook
+            auto& g8 = ranks_[7]['g' - 'a'];
+            auto& f8 = ranks_[7]['f' - 'a'];
+            g8 = e8;
+            e8 = piece{};
+            f8 = h8;
+            h8 = piece{};
+            break;
+        }
+        case piece_colour::White:
+        {
+            auto& e1 = ranks_[0]['e' - 'a']; // King
+            auto& h1 = ranks_[0]['h' - 'a']; // Rook
+            auto& g1 = ranks_[0]['g' - 'a'];
+            auto& f1 = ranks_[0]['f' - 'a'];
+            g1 = e1;
+            e1 = piece{};
+            f1 = h1;
+            h1 = piece{};
+            break;
+        }
+        case piece_colour::None:
+            return;
+    }
+}
+
+void
+board::move(chess::square const& src, chess::square const& dest, bool const is_capture)
+{
+    auto& from_piece = ranks_[src.rank - '1'][src.file - 'a'];
+    auto& to_piece = ranks_[dest.rank - '1'][dest.file - 'a'];
     if (to_piece.is_null())
     {
     }
     else if (!is_capture)
     {
-        throw std::runtime_error("Move to occupied square when no capture was specified");
+        throw std::runtime_error("Move to occupied square, but no capture was declared");
     }
     to_piece = from_piece;
     from_piece = chess::piece{};

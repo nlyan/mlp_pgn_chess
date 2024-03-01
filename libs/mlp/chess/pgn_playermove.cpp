@@ -9,14 +9,14 @@ namespace mlp::chess::pgn
 std::ostream&
 operator<<(std::ostream& os, kingside_castling const& kc)
 {
-    os << "(kingside castling)";
+    os << static_cast<char>(kc.colour) << "(Kingside Castling)";
     return os;
 }
 
 std::ostream&
 operator<<(std::ostream& os, queenside_castling const& qc)
 {
-    os << "(queenside castling)";
+    os << static_cast<char>(qc.colour) << "(Queenside Castling)";
     return os;
 }
 
@@ -24,23 +24,23 @@ std::ostream&
 operator<<(std::ostream& os, standard_move const& move)
 {
     os << static_cast<char>(move.colour) << static_cast<char>(move.piece);
-    if ((move.from.file != 0) || (move.from.rank != 0))
+    if ((move.src.file != 0) || (move.src.rank != 0))
     {
-        os << " at " << ((move.from.file != 0) ? static_cast<char>(move.from.file) : '?')
-           << ((move.from.rank != 0) ? static_cast<char>(move.from.rank) : '?');
+        os << " at " << ((move.src.file != 0) ? static_cast<char>(move.src.file) : '?')
+           << ((move.src.rank != 0) ? static_cast<char>(move.src.rank) : '?');
     }
-    os << " to " << move.to.file << move.to.rank;
-    if (move.capture)
+    os << " to " << move.dest.file << move.dest.rank;
+    if (move.is_capture)
     {
         os << " (capture)";
     }
-    if (move.check)
+    if (move.is_check)
     {
         os << " (check)";
     }
-    else if (move.mate)
+    else if (move.is_mate)
     {
-        os << " (mate)";
+        os << " (checkmate)";
     }
     return os;
 }

@@ -23,7 +23,11 @@ public:
                           chess::square& src, chess::square const& dest,
                           bool is_capture);
 
-    void move(chess::square const& from, chess::square const& to, bool is_capture);
+    void perform_queenside_castling(piece_colour side);
+
+    void perform_kingside_castling(piece_colour side);
+
+    void move(chess::square const& src, chess::square const& dest, bool is_capture);
 
     bool empty_at(chess::square const& square) const noexcept;
 
