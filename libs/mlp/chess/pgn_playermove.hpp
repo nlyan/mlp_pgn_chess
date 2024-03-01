@@ -1,6 +1,8 @@
 #pragma once
 
 #include <mlp/chess/piece.hpp>
+#include <mlp/chess/square.hpp>
+
 #include <iosfwd>
 #include <variant>
 
@@ -10,25 +12,27 @@ namespace mlp::chess::pgn
 class kingside_castling
 {
 public:
-    piece_colour colour = piece_colour::None;
+    piece_colour colour = piece_colour::Null;
 };
 
 class queenside_castling
 {
 public:
-    piece_colour colour = piece_colour::None;
+    piece_colour colour = piece_colour::Null;
 };
 
 class standard_move
 {
 public:
-    piece_colour colour     = piece_colour::None;
+    piece_colour colour     = piece_colour::Null;
     piece_type piece        = piece_type::Pawn;
-    piece_type promoted_to  = piece_type::None;
-    char from_file          = 0; // 'a'..'h'
+    piece_type promoted_to  = piece_type::Null;
+    square                  from;
+    square                  to;
+    /*char from_file          = 0; // 'a'..'h'
     char from_rank          = 0; // 1..8
     char to_file            = 0; // 'a'..'h'
-    char to_rank            = 0; // 1..8
+    char to_rank            = 0; // 1..8*/
     bool capture            = false;
     bool check              = false;
     bool mate               = false;

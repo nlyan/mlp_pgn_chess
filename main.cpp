@@ -45,15 +45,14 @@ try
         }
         auto& move = std::get<chess::pgn::standard_move>(move_var);
         if (!chess_board.identify_moving_piece(move.colour, move.piece,
-                                               move.from_rank, move.from_file,
-                                               move.to_rank, move.to_file, move.capture))
+                                               move.from,move.to, move.capture))
         {
             std::cout << "Failed to identify piece for move " << (move_id/2) << ": " << move << "\n";
             return EXIT_FAILURE;
         }
 
         std::cout << "\nMove " << (move_id/2) << ": " << move << "\n";
-        chess_board.move(move.from_rank, move.from_file, move.to_rank, move.to_file, move.capture);
+        chess_board.move(move.from, move.to, move.capture);
         std::cout << chess_board;
         ++move_id;
     }

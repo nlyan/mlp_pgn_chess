@@ -1,5 +1,5 @@
 #include <mlp/chess/pgn_parser.hpp>
-#include <mlp/chess/util.hpp>
+#include <mlp/chess/utility.hpp>
 
 #include <charconv>
 #include <fstream>
@@ -223,27 +223,26 @@ parse_standard_move(char const*& begin, char const* const end, pgn::standard_mov
     {
         move.piece = piece_type::Pawn;
     }
-    /* From ChatGPT 4:
+    /*
+     * When disambiguating a player move, PGN uses the following rules:
      *
-     * When disambiguating a player_move, PGN uses the following rules:
-     *
-     * If two (or more) identical pieces can player_move to the same square, PGN first tries to disambiguate using the file
-     * (column) of departure. If they share the same file but are on different ranks (rows), then the rank of
+     * If two (or more) identical pieces can player move to the same square, PGN first tries to disambiguate using the
+     * file (column) of departure. If they share the same file but are on different ranks (rows), then the rank of
      * departure is used to disambiguate.
      *
      * If the pieces are on the same file and rank (which would typically only occur in the case of pawns promoting
      * and then one of the promoted pieces returning to the back rank, a very rare occurrence), then the piece is
      * identified by _both_ file and rank of departure.
      */
-    move.from_file = 0; // So we can detect failure
-    move.from_rank = 0;
-    parse_file(ptr, end, move.from_file); // Optional, so ignore failure
-    parse_rank(ptr, end, move.from_rank); // Optional, so ignore failure
+    move.from.file = 0; // So we can detect failure
+    move.from.rank = 0;
+    parse_file(ptr, end, move.from.file); // Optional, so ignore failure
+    parse_rank(ptr, end, move.from.rank); // Optional, so ignore failure
     move.capture = false;
     parse_capture(ptr, end, move.capture); // Optional, so ignore failure
-    move.to_file = 0; // So we can detect failure
-    move.to_rank = 0;
-    if (!parse_square(ptr, end, move.to_file, move.to_rank))
+    move.to.file = 0; // So we can detect failure
+    move.to.rank = 0;
+    if (!parse_square(ptr, end, move.to.file, move.to.rank))
     {
         // If we just saw a capture 'x' then a destination square should have followed
         if (move.capture)
@@ -253,15 +252,15 @@ parse_standard_move(char const*& begin, char const* const end, pgn::standard_mov
         }
         // If we eagerly parsed the destination square as the departing square, then
         // both file and rank must be present.
-        if (!move.from_file || !move.from_rank)
+        if (!move.from.file || !move.from.rank)
         {
             move = pgn::standard_move{};
             return false;
         }
-        std::swap(move.to_file, move.from_file);
-        std::swap(move.to_rank, move.from_rank);
+        std::swap(move.to.file, move.from.file);
+        std::swap(move.to.rank, move.from.rank);
     }
-    move.promoted_to = chess::piece_type::None;
+    move.promoted_to = chess::piece_type::Null;
     parse_pawn_promotion(ptr, end, move);
     move.check = false;
     move.mate = false;
@@ -379,7 +378,8 @@ parser::parse_file(std::filesystem::path const& file_path,
 
 bool
 parser::parse_pgn_move(char const*& begin, const char *end,
-                       unsigned& move_id, pgn::player_move& white_move, pgn::player_move& black_move)
+                       unsigned& move_id,
+                       pgn::player_move& white_move, pgn::player_move& black_move)
 {
     auto ptr = begin;
     skip_ws(ptr, end);
@@ -397,7 +397,7 @@ parser::parse_pgn_move(char const*& begin, const char *end,
         return false;
     }
     std::visit (overloaded([](auto& move) { move.colour = piece_colour::White; },
-                           [](std::monostate&){}), white_move);
+                                  [](std::monostate&){}), white_move);
     skip_ws(ptr, end);
     if (!parse_player_move(ptr, end, black_move))
     {
@@ -409,7 +409,7 @@ parser::parse_pgn_move(char const*& begin, const char *end,
         return false;
     }
     std::visit (overloaded([](auto& move) { move.colour = piece_colour::Black; },
-                           [](std::monostate&){}), black_move);
+                                  [](std::monostate&){}), black_move);
     begin = ptr;
     return true;
 }

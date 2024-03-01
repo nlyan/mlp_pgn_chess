@@ -1,5 +1,5 @@
 #include <mlp/chess/pgn_playermove.hpp>
-#include <mlp/chess/util.hpp>
+#include <mlp/chess/utility.hpp>
 
 #include <ostream>
 
@@ -24,12 +24,12 @@ std::ostream&
 operator<<(std::ostream& os, standard_move const& move)
 {
     os << static_cast<char>(move.colour) << static_cast<char>(move.piece);
-    if ((move.from_file != 0) || (move.from_rank != 0))
+    if ((move.from.file != 0) || (move.from.rank != 0))
     {
-        os << " at " << ((move.from_file != 0) ? static_cast<char>(move.from_file) : '?')
-           << ((move.from_rank != 0) ? static_cast<char>(move.from_rank) : '?');
+        os << " at " << ((move.from.file != 0) ? static_cast<char>(move.from.file) : '?')
+           << ((move.from.rank != 0) ? static_cast<char>(move.from.rank) : '?');
     }
-    os << " to " << move.to_file << move.to_rank;
+    os << " to " << move.to.file << move.to.rank;
     if (move.capture)
     {
         os << " (capture)";
@@ -49,7 +49,7 @@ std::ostream&
 operator<<(std::ostream& os, player_move const& move)
 {
     std::visit(overloaded([&os](auto const& actual_move){ os << actual_move; },
-                          [&os](std::monostate const&){ os << "(not taken)"; }), move);
+                                [&os](std::monostate const&){ os << "(not taken)"; }), move);
     return os;
 }
 

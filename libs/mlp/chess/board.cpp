@@ -24,33 +24,33 @@ board::board() noexcept: ranks_(starting_board_state)
 }
 
 bool
-board::identify_moving_piece(piece_colour colour, piece_type type, char& from_rank, char& from_file,
-                             char const to_rank, char const to_file, bool is_capture)
+board::identify_moving_piece(piece_colour colour, piece_type type,
+                             chess::square& src, chess::square const& dest,
+                             bool is_capture)
 {
     bool found = false;
     char found_rank = 0;
     char found_file = 0;
-    // Iterate over the board to find a piece of the specified colour and type
-    for (int rank = 0; rank < 8; ++rank)
+    // Iterate over the board dest find a piece of the specified colour and type
+    for (char rank = '1'; rank <= '8'; ++rank)
     {
-        if ((from_rank != 0) && (rank != (from_rank - '1')))
+        if ((src.rank != 0) && (rank != src.rank))
         {
             continue;
         }
-        for (int file = 0; file < 8; ++file)
+        for (char file = 'a'; file <= 'h'; ++file)
         {
-            if ((from_file != 0) && (file != (from_file - 'a')))
+            if ((src.file != 0) && (file != src.file))
             {
                 continue;
             }
-            const auto& piece = ranks_[rank][file];
+            const auto& piece = ranks_[rank - '1'][file - 'a'];
             if ((piece.colour() != colour) || (piece.type() != type))
             {
                 continue;
             }
-            // Check if the piece can move to the destination
-            if (is_valid_move(type, rank, file,
-                              to_rank - '1', to_file - 'a', is_capture))
+            // Check if the piece can move dest the destination
+            if (is_valid_move(type, square{file, rank}, dest, is_capture))
             {
                 if (found)
                 {
@@ -59,29 +59,36 @@ board::identify_moving_piece(piece_colour colour, piece_type type, char& from_ra
                     std::cout.put(found_file);
                     std::cout.put(found_rank);
                     std::cout << " and ";
-                    std::cout.put('a' + file);
-                    std::cout.put('1' + rank);
-                    std::cout << " can both to " << to_file << to_rank << ". "
-                                 " This is probably a hole in my implementation" << std::endl;
+                    std::cout.put(file);
+                    std::cout.put(rank);
+                    std::cout << " can both move to " << dest << "." << std::endl;
                 }
-                found_rank = '1' + rank;
-                found_file = 'a' + file;
+                found_rank = rank;
+                found_file = file;
                 found = true;
             }
         }
     }
     if (found)
     {
-        from_rank = found_rank;
-        from_file = found_file;
+        src.rank = found_rank;
+        src.file = found_file;
     }
     return found;
 }
 
 bool
-board::straight_path_clear_between(chess::square const& src,
-                                   chess::square const& dest) const
+board::empty_at(chess::square const& square) const noexcept
 {
+    auto& piece = ranks_[square.rank - '1'][square.file - 'a'];
+    return piece.is_null();
+}
+
+bool
+board::straight_path_is_clear_between(chess::square const& src,
+                                      chess::square const& dest) const
+{
+    std::cout << "Checking whether straight path between " << src << " and " << dest << " is clear\n";
     if (src == dest) [[unlikely]]
     {
         return true;
@@ -93,13 +100,31 @@ board::straight_path_clear_between(chess::square const& src,
     {
         throw std::runtime_error ("Straight path clearance check called on non-straight move");
     }
-    return true; // TODO
+    int const rank_dir = (rank_diff > 0) - (rank_diff < 0);
+    int const file_dir = (file_diff > 0) - (file_diff < 0);
+    auto step = src;
+    while (true)
+    {
+        step.rank += rank_dir;
+        step.file += file_dir;
+        if (step == dest)
+        {
+            break;
+        }
+        std::cout << "Checking whether " << step << " is empty -> " << std::boolalpha << empty_at(step) << std::endl;
+        if (!empty_at(step))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool
-board::diagonal_path_clear_between(chess::square const& src,
-                                   chess::square const& dest) const
+board::diagonal_path_is_clear_between(chess::square const& src,
+                                      chess::square const& dest) const
 {
+    std::cout << "Checking whether diagonal path between " << src << " and " << dest << " is clear\n";
     if (src == dest) [[unlikely]]
     {
         return true;
@@ -111,17 +136,32 @@ board::diagonal_path_clear_between(chess::square const& src,
     {
         throw std::runtime_error ("Diagonal path clearance check called on non-diagonal move");
     }
-    int const rank_dir = rank_diff / abs(rank_diff);
-    int const file_dir = file_diff / abs(file_diff);
-    return true; // TODO
+    int const rank_dir = (rank_diff > 0) - (rank_diff < 0);
+    int const file_dir = (file_diff > 0) - (file_diff < 0);
+    auto step = src;
+    while (true)
+    {
+        step.rank += rank_dir;
+        step.file += file_dir;
+        if (step == dest)
+        {
+            break;
+        }
+        std::cout << "Checking whether " << step << " is empty -> " << std::boolalpha << empty_at(step) << std::endl;
+        if (!empty_at(step))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool
-board::is_valid_move(const piece_type type, int const from_rank, int const from_file,
-                     int const to_rank, int const to_file, bool const is_capture)
+board::is_valid_move(piece_type const type, square const& from, square const& to,
+                     bool const is_capture)
 {
-    int const rank_diff = abs(to_rank - from_rank);
-    int const file_diff = abs(to_file - from_file);
+    int const rank_diff = abs(to.rank - from.rank);
+    int const file_diff = abs(to.file - from.file);
     bool const is_diagonal_move = (rank_diff == file_diff);
     bool const is_straight_move = ((rank_diff == 0) || (file_diff == 0));
     switch (type)
@@ -129,12 +169,12 @@ board::is_valid_move(const piece_type type, int const from_rank, int const from_
         case piece_type::Bishop:
         {
             // Bishops move diagonally
-            return is_diagonal_move;
+            return is_diagonal_move && diagonal_path_is_clear_between(from, to);
         }
         case piece_type::King:
         {
             // There's only ever one King so there's never any ambiguity, we can safely just assume the move
-            // is correct.
+            // is always valid.
             return true;
         }
         case piece_type::Knight:
@@ -147,19 +187,20 @@ board::is_valid_move(const piece_type type, int const from_rank, int const from_
         }
         case piece_type::Pawn:
         {
-            return is_valid_pawn_move(from_rank, from_file, to_rank, to_file, is_capture);
+            return is_valid_pawn_move(from, to, is_capture);
         }
         case piece_type::Queen:
         {
             // Queens move either straight along a rank or file, or diagonally
-            return (is_straight_move || is_diagonal_move);
+            return ((is_straight_move && straight_path_is_clear_between(from, to))
+                    || (is_diagonal_move && diagonal_path_is_clear_between(from, to)));
         }
         case piece_type::Rook:
         {
             // Rooks move either vertically or horizontally
-            return is_straight_move;
+            return (is_straight_move && straight_path_is_clear_between(from, to));
         }
-        case piece_type::None:
+        case piece_type::Null:
         default:
         {
             break;
@@ -169,15 +210,15 @@ board::is_valid_move(const piece_type type, int const from_rank, int const from_
 }
 
 bool
-board::is_valid_pawn_move(int from_rank, int from_file, int to_rank, int to_file, bool const is_capture)
+board::is_valid_pawn_move(square const& from, square const& to, bool const is_capture)
 {
     // Calculate the direction of movement based on the pawns colour.
     // This works because Pawns can only move forwards.
-    int const direction = ranks_[from_rank][from_file].colour() == piece_colour::White ? 1 : -1;
+    int const direction = ranks_[from.rank - '1'][from.file - 'a'].colour() == piece_colour::White ? 1 : -1;
     if (is_capture)
     {
         // Capture move must be diagonal and advance one rank in the correct direction
-        if (abs(from_file - to_file) == 1 && (to_rank - from_rank) == direction)
+        if (abs(from.file - to.file) == 1 && (to.rank - from.rank) == direction)
         {
             return true; // Assuming diagonal move is valid if it's a capture.
         }
@@ -185,15 +226,15 @@ board::is_valid_pawn_move(int from_rank, int from_file, int to_rank, int to_file
     else
     {
         // Non-capture move, must move in file
-        if (from_file == to_file)
+        if (from.file == to.file)
         {
-            if (to_rank - from_rank == direction)
+            if (to.rank - from.rank == direction)
             {
                 // Single square forward
                 return true;
             }
-            else if ((((from_rank == 1) && (direction == 1)) || ((from_rank == 6) && (direction == -1)))
-                    && ((to_rank - from_rank) == (2 * direction)))
+            else if ((((from.rank == '2') && (direction == 1)) || ((from.rank == '7') && (direction == -1)))
+                    && ((to.rank - from.rank) == (2 * direction)))
             {
                 // Double square forward on first move
                 return true;
@@ -204,23 +245,23 @@ board::is_valid_pawn_move(int from_rank, int from_file, int to_rank, int to_file
 }
 
 void
-board::move(char from_rank, char from_file, char to_rank, char to_file, bool is_capture)
+board::move(chess::square const& from, chess::square const& to, bool const is_capture)
 {
-    auto& from_square = ranks_[from_rank - '1'][from_file - 'a'];
-    auto& to_square = ranks_[to_rank - '1'][to_file - 'a'];
-    if ((to_square.type() == piece_type::None) && (to_square.colour() == piece_colour::None))
+    auto& from_piece = ranks_[from.rank - '1'][from.file - 'a'];
+    auto& to_piece = ranks_[to.rank - '1'][to.file - 'a'];
+    if (to_piece.is_null())
     {
     }
     else if (!is_capture)
     {
-        throw std::runtime_error("Move to occupied square when move wasn't tagged as a capture");
+        throw std::runtime_error("Move to occupied square when no capture was specified");
     }
-    to_square = from_square;
-    from_square = chess::piece{};
+    to_piece = from_piece;
+    from_piece = chess::piece{};
 }
 
 std::ostream&
-operator<<(std::ostream& os, board const& board)
+operator<< (std::ostream& os, board const& board)
 {
     auto& ranks = board.ranks();
     int rank_num = 8;
@@ -235,10 +276,9 @@ operator<<(std::ostream& os, board const& board)
         }
         os << "\n";
     }
-    os << "  ";
     for (auto file = 'a'; file <= 'h'; ++file)
     {
-        os << file << "  ";
+        os << "  " << file;
     }
     os << "\n";
     return os;
